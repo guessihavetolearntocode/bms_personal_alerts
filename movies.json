@@ -1,0 +1,32 @@
+[
+    {
+        "movie": "spider-man",
+        "keywords": ["spider", "homecoming"],
+        "theatres": ["any"],
+        "locations": ["bengaluru"]
+    },
+    {
+        "movie": "avatar",
+        "keywords": ["avatar", "fire", "ash"],
+        "theatres": ["any"],
+        "locations": ["bengaluru"]
+    },
+    {
+        "movie": "bill",
+        "keywords": ["bill"],
+        "theatres": ["any"],
+        "locations": ["bengaluru"]
+    },
+    {
+        "movie": "kaantha",
+        "keywords": ["kaantha"],
+        "theatres": ["any"],
+        "locations": ["bengaluru"]
+    },
+    {
+        "movie": "amazing",
+        "keywords": ["amazing"],
+        "theatres": ["pvr phoenix marketcity mall", "whitefield road"],
+        "locations": ["bengaluru"]
+    }
+]

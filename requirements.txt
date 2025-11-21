@@ -1,0 +1,5 @@
+requests
+beautifulsoup4
+python-dotenv
+twilio
+python-telegram-bot==20.6
