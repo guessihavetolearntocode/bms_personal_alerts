@@ -1,22 +1,30 @@
-# main.py  (single-run version for GitHub Actions)
 import os, json, requests
 from datetime import datetime
 from twilio.rest import Client as TwilioClient
 
+# -----------------------------
 # Config
+# -----------------------------
 MOVIES_FILE = "movies.json"
 STATE_FILE = "called_state.json"
 
-# Load env
+# Load environment variables
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
 TWILIO_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_FROM = os.getenv("TWILIO_FROM")
 TO_PHONE = os.getenv("TO_PHONE")
 
-# Utilities: load/save state
+# Cinepolis city mapping example
+CINEPOLIS_CITY_ID = {
+    "bangalore": 17,
+    "coimbatore": 39
+}
+
+# -----------------------------
+# State utils
+# -----------------------------
 def load_state():
     if os.path.exists(STATE_FILE):
         try:
@@ -30,21 +38,23 @@ def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
 
+# -----------------------------
 # Notifications
+# -----------------------------
 def send_telegram(msg):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("Telegram not configured, skipping")
+        print("Telegram not configured")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        resp = requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg})
-        print("Telegram status:", resp.status_code)
+        r = requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg})
+        print("Telegram status:", r.status_code)
     except Exception as e:
         print("Telegram error:", e)
 
 def make_call():
     if not (TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM and TO_PHONE):
-        print("Twilio not configured, skipping call")
+        print("Twilio not configured")
         return
     try:
         client = TwilioClient(TWILIO_SID, TWILIO_TOKEN)
@@ -53,50 +63,63 @@ def make_call():
     except Exception as e:
         print("Twilio error:", e)
 
-# Check page simple function
-def theatre_live(url, theatre):
+# -----------------------------
+# Cinepolis API scraping
+# -----------------------------
+def get_cinepolis_nowshowing(city_name):
+    city_id = CINEPOLIS_CITY_ID.get(city_name.lower())
+    if not city_id:
+        print(f"No city id mapping for {city_name}")
+        return []
+    url = f"https://api_new.cinepolisindia.com/api/movies/now-playing-filtered/?movie_language_id=&movie_genre_id=&city_id={city_id}"
     try:
-        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
+        r = requests.get(url, timeout=15)
         if r.status_code != 200:
-            print(f"Failed to fetch {url}: {r.status_code}")
-            return False
-        return theatre.lower() in r.text.lower()
+            print(f"Cinepolis fetch failed {r.status_code}")
+            return []
+        data = r.json()
+        return data.get("movies", [])
     except Exception as e:
-        print("Request error for", url, e)
-        return False
+        print("Cinepolis request error:", e)
+        return []
 
+# -----------------------------
+# Main check function
+# -----------------------------
 def main_once():
-    print("Starting single-run check:", datetime.utcnow().isoformat())
-    state = load_state()           # existing alerted keys
-    movies = json.load(open(MOVIES_FILE, "r"))
+    print("Starting check:", datetime.utcnow().isoformat())
+    state = load_state()
+    movies_config = json.load(open(MOVIES_FILE, "r"))
+    
+    for movie_entry in movies_config:
+        movie_name = movie_entry["movie"]
+        keywords = movie_entry["keywords"]
+        theatres_filter = [t.lower() for t in movie_entry["theatres"]]
+        locations = movie_entry["locations"]
 
-    any_alerts = False
+        for loc in locations:
+            cine_movies = get_cinepolis_nowshowing(loc)
+            for cine_movie in cine_movies:
+                title = cine_movie.get("title", "").lower()
+                if any(k.lower() in title for k in keywords):
+                    movie_theatres = [t["name"].lower() for t in cine_movie.get("theatres", [])]
+                    # Determine theatres to alert
+                    if "any" in theatres_filter:
+                        relevant_theatres = movie_theatres
+                    else:
+                        relevant_theatres = [t for t in movie_theatres if t in theatres_filter]
 
-    for item in movies:
-        movie = item.get("movie")
-        url = item.get("url")
-        theatres = item.get("theatres", [])
-
-        for theatre in theatres:
-            key = f"{movie}||{theatre}"
-            live = theatre_live(url, theatre)
-            print(f"Checked: {movie} @ {theatre} -> {'LIVE' if live else 'not live'}")
-
-            if live:
-                if key in state:
-                    print("Already alerted:", key)
-                    continue
-                # send notifications
-                msg = f"🎟 TICKETS LIVE!\nMovie: {movie}\nTheatre: {theatre}\n{url}"
-                send_telegram(msg)
-                make_call()
-                # mark alerted with timestamp
-                state[key] = datetime.utcnow().isoformat()
-                any_alerts = True
-
-    # Save state even if nothing changed (ensures cache updated)
+                    for t_name in relevant_theatres:
+                        key = f"{movie_name}||{t_name}||{loc}"
+                        if key in state:
+                            continue
+                        msg = f"🎟 TICKETS LIVE!\nMovie: {movie_name}\nTheatre: {t_name}\nLocation: {loc}"
+                        send_telegram(msg)
+                        make_call()
+                        state[key] = datetime.utcnow().isoformat()
+    
     save_state(state)
-    print("Done. Alerts sent:", any_alerts)
+    print("Check completed.")
 
 if __name__ == "__main__":
     main_once()
