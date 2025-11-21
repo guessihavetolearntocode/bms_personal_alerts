@@ -1,25 +1,31 @@
-name: Run Listener
+name: Ticket Alert Listener
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # runs every 5 minutes
-  workflow_dispatch:         # still allows manual trigger
+    - cron: "*/5 * * * *"   # check Telegram messages every 5 minutes
+  workflow_dispatch:
 
 jobs:
   listener:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Set environment variables from secrets
         run: |
           echo "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}" >> $GITHUB_ENV
+          echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> $GITHUB_ENV
 
-      - run: python listener.py
+      - name: Run listener
+        run: python listener.py
