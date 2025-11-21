@@ -1,9 +1,32 @@
 [
-  {
-    "movie": "Spider-Man: Homecoming",
-    "city": "Bengaluru",
-    "url": "https://in.bookmyshow.com/movies/bengaluru/spider-man-homecoming/ET00045372",
-    "theatres": ["PVR: Nexus (Formerly Forum)", "Cinepolis: Nexus Shantiniketan","PVR: Phoenix Marketcity Mall","PVR: VR Bengaluru, Whitefield Road","INOX: Mantri Square, Malleshwaram","Gopalan Grand Mall: Old Madras Road","Gopalan Miniplex: Signature Mall, Old Madras Road"]
-  }
-
+    {
+        "movie": "Spider-Man: Homecoming",
+        "keywords": ["spider", "homecoming"],
+        "theatres": ["any"],
+        "locations": ["bangalore"]
+    },
+    {
+        "movie": "Avatar: The Fire",
+        "keywords": ["avatar", "fire", "ash"],
+        "theatres": ["any"],
+        "locations": ["bangalore"]
+    },
+    {
+        "movie": "Kill Bill",
+        "keywords": ["bill"],
+        "theatres": ["any"],
+        "locations": ["bangalore"]
+    },
+    {
+        "movie": "Kaantha",
+        "keywords": ["kaantha"],
+        "theatres": ["any"],
+        "locations": ["bangalore"]
+    },
+    {
+        "movie": "Amazing Movie",
+        "keywords": ["amazing"],
+        "theatres": ["PVR Phoenix Marketcity Mall", "PVR Whitefield Road"],
+        "locations": ["bangalore"]
+    }
 ]
