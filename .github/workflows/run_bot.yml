@@ -28,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env from secrets (optional)
+      - name: Create .env from secrets
         run: |
           echo "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}" > .env
           echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> .env
@@ -36,13 +36,6 @@ jobs:
           echo "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}" >> .env
           echo "TWILIO_FROM=${{ secrets.TWILIO_FROM }}" >> .env
           echo "TO_PHONE=${{ secrets.TO_PHONE }}" >> .env
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
-          TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
-          TO_PHONE: ${{ secrets.TO_PHONE }}
 
       - name: Run bot script
         run: python main.py
